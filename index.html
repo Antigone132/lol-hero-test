@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>你是哪位英雄联盟英雄？</title>
+<style>
+  :root{
+    --gold:#c9aa71; --gold-bright:#f0e6d2; --hex:#0ac8b9;
+    --bg1:#010a13; --bg2:#0a1428;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    background:radial-gradient(ellipse at 50% 0%,#12233d 0%,var(--bg2) 40%,var(--bg1) 100%);
+    color:#e8e3d8; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  #app{width:100%;max-width:760px;}
+  .frame{
+    background:linear-gradient(160deg,rgba(20,34,56,.92),rgba(8,15,28,.95));
+    border:1px solid rgba(201,170,113,.45);
+    outline:1px solid rgba(201,170,113,.15); outline-offset:5px;
+    padding:46px 40px; position:relative;
+    box-shadow:0 0 60px rgba(0,0,0,.6), inset 0 0 40px rgba(10,200,185,.03);
+  }
+  .frame::before,.frame::after{
+    content:""; position:absolute; width:22px; height:22px; border:2px solid var(--gold);
+  }
+  .frame::before{top:-2px;left:-2px;border-right:none;border-bottom:none;}
+  .frame::after{bottom:-2px;right:-2px;border-left:none;border-top:none;}
+
+  h1.title{
+    font-family:Georgia,"STKaiti",serif; text-align:center; font-size:clamp(28px,5vw,42px);
+    letter-spacing:.08em;
+    background:linear-gradient(180deg,#f5ead0,#c9aa71);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .subtitle{text-align:center;color:var(--hex);letter-spacing:.35em;font-size:13px;margin:14px 0 8px;text-transform:uppercase;}
+  .desc{text-align:center;color:#9fb0c3;font-size:14px;line-height:1.9;margin:22px auto 34px;max-width:520px;}
+  .divider{width:120px;height:1px;margin:20px auto;background:linear-gradient(90deg,transparent,var(--gold),transparent);position:relative;}
+  .divider::after{content:"◆";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--gold);font-size:9px;}
+
+  .btn{
+    display:block;margin:0 auto;cursor:pointer;font-size:16px;letter-spacing:.3em;text-indent:.3em;
+    font-family:inherit;color:var(--gold-bright);
+    background:linear-gradient(180deg,#1b3a4b,#0d2233);
+    border:1px solid var(--gold);padding:15px 54px;transition:all .25s;
+  }
+  .btn:hover{box-shadow:0 0 24px rgba(201,170,113,.35), inset 0 0 18px rgba(10,200,185,.15);transform:translateY(-2px);}
+  .btn.small{font-size:13px;padding:11px 26px;letter-spacing:.15em;text-indent:.15em;}
+  .btn.ghost{border-color:rgba(201,170,113,.5);background:rgba(13,28,46,.7);color:#cfd8e3;}
+  .btn-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px;}
+  .btn-row .btn{margin:0;}
+
+  .progress-info{display:flex;justify-content:space-between;font-size:12px;color:#8fa3b8;letter-spacing:.15em;margin-bottom:8px;}
+  .progress{height:5px;background:rgba(255,255,255,.07);border:1px solid rgba(201,170,113,.25);margin-bottom:34px;}
+  .progress-bar{height:100%;width:0;background:linear-gradient(90deg,#0ac8b9,#c9aa71);transition:width .4s ease;box-shadow:0 0 10px rgba(10,200,185,.5);}
+  .q-num{font-size:11px;color:var(--hex);letter-spacing:.3em;margin-bottom:10px;}
+  .q-text{font-family:Georgia,serif;font-size:clamp(18px,3vw,23px);line-height:1.6;color:#f0e6d2;margin-bottom:28px;min-height:2.6em;}
+  .options{display:grid;gap:14px;}
+  .opt{
+    cursor:pointer;text-align:left;padding:16px 20px;font-size:15px;line-height:1.6;color:#cfd8e3;
+    background:rgba(13,28,46,.7);border:1px solid rgba(120,150,180,.25);font-family:inherit;
+    transition:all .2s; position:relative; padding-left:52px;
+  }
+  .opt .tag{
+    position:absolute;left:16px;top:50%;transform:translateY(-50%);
+    width:24px;height:24px;border:1px solid rgba(201,170,113,.5);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:12px;
+  }
+  .opt:hover{border-color:var(--gold);background:rgba(30,50,80,.85);color:#fff;transform:translateX(4px);}
+  .opt.picked{border-color:var(--gold-bright);background:rgba(201,170,113,.18);color:#fff;box-shadow:0 0 18px rgba(201,170,113,.3);}
+
+  .result-head{text-align:center;margin-bottom:6px;font-size:12px;letter-spacing:.4em;color:var(--hex);}
+  .hero-wrap{display:flex;gap:34px;align-items:stretch;margin-top:22px;flex-wrap:wrap;}
+  .hero-img-box{
+    flex:0 0 280px;max-width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;
+    border:1px solid rgba(201,170,113,.5);outline:1px solid rgba(201,170,113,.15);outline-offset:4px;
+    background:linear-gradient(135deg,#16283f,#0a1428);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hero-img-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s;}
+  .hero-img-box img.loaded{opacity:1;}
+  .img-loading{color:#5b6b7d;font-size:12px;letter-spacing:.3em;animation:pulse 1.5s ease infinite;}
+  .img-fallback{
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    width:100%;height:100%;
+    background:radial-gradient(circle at 50% 35%,rgba(201,170,113,.25),rgba(10,20,35,.9) 75%);
+  }
+  .img-fallback .ch{
+    font-family:Georgia,"STKaiti",serif;font-size:56px;
+    background:linear-gradient(180deg,#f5ead0,#c9aa71);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .img-fallback .en{color:#8fa3b8;font-size:11px;letter-spacing:.3em;}
+  @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+  .hero-info{flex:1;min-width:260px;display:flex;flex-direction:column;}
+  .hero-name{
+    font-family:Georgia,"STKaiti",serif;font-size:clamp(30px,5vw,40px);
+    background:linear-gradient(180deg,#f5ead0,#c9aa71);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero-title{color:#8fa3b8;font-size:14px;letter-spacing:.2em;margin:6px 0 4px;}
+  .trait-badges{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px;}
+  .trait-badge{
+    padding:5px 14px;border:1px solid var(--hex);color:var(--hex);
+    font-size:12px;letter-spacing:.2em;text-indent:.1em;
+    box-shadow:inset 0 0 12px rgba(10,200,185,.12);
+  }
+  .hero-quote{font-family:Georgia,serif;font-style:italic;color:#c9aa71;font-size:15px;margin:12px 0 14px;line-height:1.7;}
+  .hero-desc{color:#b9c6d4;font-size:14px;line-height:2.0;flex:1;}
+  .top-traits{margin-top:26px;}
+  .top-traits h3{font-size:12px;letter-spacing:.35em;color:var(--gold);margin-bottom:14px;font-weight:normal;}
+  .trait-row{margin-bottom:12px;}
+  .trait-labels{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;letter-spacing:.1em;color:#9fb0c3;}
+  .trait-track{height:6px;background:rgba(255,255,255,.06);position:relative;}
+  .trait-fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#0ac8b9,#c9aa71);box-shadow:0 0 8px rgba(10,200,185,.4);transition:width 1s ease;}
+  .toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);
+    background:rgba(10,20,35,.95);border:1px solid var(--gold);color:var(--gold-bright);
+    padding:12px 28px;font-size:14px;letter-spacing:.1em;opacity:0;pointer-events:none;
+    transition:all .3s;z-index:99;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .fade{animation:fadeIn .45s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  @media (max-width:640px){
+    .frame{padding:32px 22px;}
+    .hero-img-box{flex-basis:100%;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="screen-start" class="frame fade">
+    <div class="subtitle">League of Legends · Personality Test</div>
+    <h1 class="title">你是哪位英雄？</h1>
+    <div class="divider"></div>
+    <p class="desc">
+      符文之地的每位英雄，都有自己的信念、执念与故事。<br>
+      <b style="color:#c9aa71">20 道日常心理题</b>，分析你的性格特质，<br>
+      从 <b style="color:#c9aa71">44 位英雄</b>中，找到与你灵魂最契合的那一位。<br>
+      题目与游戏无关，凭直觉作答即可——
+    </p>
+    <button class="btn" onclick="startQuiz()">进入峡谷</button>
+  </section>
+
+  <section id="screen-quiz" class="frame" hidden>
+    <div class="progress-info">
+      <span id="q-count">第 1 / 20 题</span>
+      <span id="q-pct">5%</span>
+    </div>
+    <div class="progress"><div class="progress-bar" id="pbar"></div></div>
+    <div id="q-box" class="fade">
+      <div class="q-num" id="q-num"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="q-opts"></div>
+    </div>
+  </section>
+
+  <section id="screen-result" class="frame" hidden>
+    <div class="result-head" id="result-head">— 测 试 结 果 —</div>
+    <div class="hero-wrap">
+      <div class="hero-img-box" id="hero-img-box">
+        <div class="img-loading" id="img-loading">画像召唤中…</div>
+        <div class="img-fallback" id="img-fallback">
+          <div class="ch" id="fallback-ch"></div>
+          <div class="en" id="fallback-en"></div>
+        </div>
+        <img id="hero-img" alt="英雄插画" referrerpolicy="no-referrer">
+      </div>
+      <div class="hero-info">
+        <div class="hero-name" id="hero-name"></div>
+        <div class="hero-title" id="hero-title"></div>
+        <div class="trait-badges" id="trait-badges"></div>
+        <div class="hero-quote" id="hero-quote"></div>
+        <div class="hero-desc" id="hero-desc"></div>
+      </div>
+    </div>
+    <div class="top-traits" id="top-traits-wrap">
+      <h3>— 你的性格关键词 —</h3>
+      <div id="top-traits"></div>
+    </div>
+    <div class="btn-row" id="btn-own">
+      <button class="btn small" onclick="copyShare()">复制分享文案</button>
+      <button class="btn small ghost" onclick="restart()">再测一次</button>
+    </div>
+    <div class="btn-row" id="btn-shared" hidden>
+      <button class="btn small" onclick="restart()">我也要测</button>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TRAITS = {
+  hot:"热血", calm:"冷静", wit:"智谋", cunning:"机变",
+  protect:"守护", free:"自由", rebel:"叛逆", honor:"正直",
+  ambition:"野心", lone:"孤勇", gentle:"温柔", art:"浪漫",
+  mad:"疯狂", seek:"好奇", faith:"信念", devotion:"深情",
+  joy:"乐天", gloom:"丧萌"
+};
+
+const QUESTIONS = [
+  { text:"深夜突然 emo，你通常怎么应对？", opts:[
+    ["找朋友倾诉，说出来就好了","gentle","joy"],
+    ["一个人安静地消化掉","lone","calm"],
+    ["写点东西/听歌，和情绪共处一会儿","art","gloom"],
+    ["复盘今天哪里做得不对","calm","wit"],
+  ]},
+  { text:"好朋友被人当众欺负，你会？", opts:[
+    ["当场站出来，先护住再说","protect","hot"],
+    ["帮朋友把场子找回来，不计后果","hot","devotion"],
+    ["记下这笔账，日后慢慢算","cunning","calm"],
+    ["用话术和规则让对方下不来台","wit","honor"],
+  ]},
+  { text:"以下哪种生活状态你最向往？", opts:[
+    ["浪迹天涯，走到哪是哪","free","joy"],
+    ["和在乎的人安稳守在一起","devotion","protect"],
+    ["不断变强，站上更高的位置","ambition","faith"],
+    ["没人认识我，安静做自己","lone","free"],
+  ]},
+  { text:"遇到明显不合理的规定，你会？", opts:[
+    ["公开反对，规矩错了就该改","rebel","honor"],
+    ["表面遵守，暗地找漏洞","cunning","wit"],
+    ["直接无视，按自己的来","free","rebel"],
+    ["先理解背后的原因，再决定怎么做","calm","wit"],
+  ]},
+  { text:"你的收藏夹/购物车里最多的是什么？", opts:[
+    ["课程和干货，总想学点啥","seek","ambition"],
+    ["好看的小玩意和穿搭","art","joy"],
+    ["各种“总有一天会用上”的怪东西","mad","free"],
+    ["没什么，想用才买","calm","lone"],
+  ]},
+  { text:"被人误解时，你的第一反应是？", opts:[
+    ["立刻解释清楚，不能受委屈","hot","honor"],
+    ["懒得解释，懂我的人自然懂","lone","calm"],
+    ["先听着，抓对方逻辑漏洞反击","wit","cunning"],
+    ["让时间和结果证明一切","faith","calm"],
+  ]},
+  { text:"一件事坚持很久都看不到结果，你会？", opts:[
+    ["继续死磕，放弃比失败更难受","faith","hot"],
+    ["加大投入，我一定要赢","ambition","hot"],
+    ["换条路，条条大路通罗马","free","wit"],
+    ["停下来复盘，是不是方法错了","wit","calm"],
+  ]},
+  { text:"在感情里，你更像哪种？", opts:[
+    ["认定一个人就掏心掏肺","devotion","gentle"],
+    ["爱可以，但不能失去自我","free","calm"],
+    ["默默对对方好，不擅长说出口","gentle","lone"],
+    ["享受暧昧，走一步看一步","cunning","joy"],
+  ]},
+  { text:"理想中的周末是？", opts:[
+    ["约一大帮朋友疯玩一整天","joy","hot"],
+    ["逛展/探店/看电影，吸收点新东西","seek","art"],
+    ["宅家做自己喜欢的事","art","lone"],
+    ["补觉，谁也别想让我出门","gloom","free"],
+  ]},
+  { text:"一个超有吸引力但有风险的机会摆在面前，你？", opts:[
+    ["先冲了再说，风险就是机会","mad","hot"],
+    ["评估收益，值得就全押","ambition","wit"],
+    ["设计好退路再上","cunning","calm"],
+    ["违背原则的事，再好也不碰","honor","faith"],
+  ]},
+  { text:"你的朋友圈/动态风格是？", opts:[
+    ["精修九宫格，审美在线","art","ambition"],
+    ["碎碎念日常，啥都发","joy","free"],
+    ["万年不更，只看不说","lone","gloom"],
+    ["段子手本手，快乐源泉","joy","wit"],
+  ]},
+  { text:"在团队里，你通常扮演什么角色？", opts:[
+    ["照顾大家情绪的老父亲/老母亲","protect","gentle"],
+    ["出主意拿方案的军师","wit","calm"],
+    ["冲在最前面的气氛发动机","hot","joy"],
+    ["把自己那摊做好，别管我","lone","free"],
+  ]},
+  { text:"哪句评价最让你难受？", opts:[
+    ["“你这人不靠谱”","honor","devotion"],
+    ["“你就这点本事？”","ambition","hot"],
+    ["“你太不合群了”","gentle","joy"],
+    ["“你太守规矩了”","rebel","free"],
+  ]},
+  { text:"对于“平淡安稳的一生”，你的看法是？", opts:[
+    ["想想就窒息，人生必须精彩","mad","free"],
+    ["平淡是真，守护好小日子就好","protect","gentle"],
+    ["可以安稳，但世界必须知道我来过","ambition","faith"],
+    ["无所谓精彩或平淡，自洽就行","calm","lone"],
+  ]},
+  { text:"你学一项新技能，通常是因为？", opts:[
+    ["纯粹好奇，想知道为什么","seek","wit"],
+    ["能变强、能变现","ambition","cunning"],
+    ["它是我的热爱所在","art","faith"],
+    ["大家都在学，别落下","calm","honor"],
+  ]},
+  { text:"朋友半夜喊你“现在立刻出来玩”，你？", opts:[
+    ["穿衣服就下楼","hot","mad"],
+    ["问清楚去哪，好玩就去","joy","free"],
+    ["明天再说，今晚已有安排","calm","faith"],
+    ["已读不回，睡觉最大","gloom","lone"],
+  ]},
+  { text:"对于一段已经结束的关系或经历，你？", opts:[
+    ["很久都走不出来","devotion","gloom"],
+    ["复盘清楚就翻篇","calm","wit"],
+    ["感谢相遇，它让我变成了更好的人","gentle","faith"],
+    ["旧的不去，新的不来","free","joy"],
+  ]},
+  { text:"你的房间/桌面通常是？", opts:[
+    ["井井有条，每样东西有固定位置","calm","honor"],
+    ["乱中有序，我自己知道在哪","free","art"],
+    ["彻底混乱，混沌才是灵感","mad","rebel"],
+    ["极简，没什么多余的东西","lone","faith"],
+  ]},
+  { text:"你怎么看待“善意的谎言”？", opts:[
+    ["能让人好受，就是好话","gentle","devotion"],
+    ["谎言就是谎言，真相才是尊重","honor","calm"],
+    ["看成本，哪个划算用哪个","cunning","wit"],
+    ["能不说就不说，太累了","gloom","lone"],
+  ]},
+  { text:"想象十年后的自己，你希望 TA？", opts:[
+    ["功成名就，成为领域里的响当当人物","ambition","wit"],
+    ["有能力保护所有在乎的人","protect","devotion"],
+    ["还在路上，依然自由热烈","free","hot"],
+    ["内心平静，活成了自己想要的样子","faith","calm"],
+  ]},
+];
+
+const IMG = p => "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt="
+  + encodeURIComponent(p) + "&image_size=portrait_4_3";
+
+const HEROES = {
+  garen:{ name:"盖伦", title:"德玛西亚之力", traits:["protect","honor","hot"],
+    quote:"“正义与我同在！”",
+    desc:"你是天生的守护者。就像冕卫家族的长子盖伦，把“守护”二字刻进骨子里——哪怕妹妹拉克丝的魔法秘密让他挣扎，他依然选择做挡在所有人身前的那面盾。你正直、可靠、认定的事就顶在最前面，你的肩膀，就是朋友们的安全感。",
+    img:IMG("heroic knight in blue and silver heavy armor holding a giant broadsword, golden short hair, righteous heroic expression, epic fantasy splash art, dramatic lighting") },
+  jarvan:{ name:"嘉文四世", title:"德玛西亚皇子", traits:["protect","hot","honor"],
+    quote:"“犯我德邦者，虽远必诛！”",
+    desc:"你既有冲劲又有担当。就像嘉文四世——生在王室却偏要上前线，父王遇刺后一夜长大，扛起整个王国的重量。你是那种平时爱玩爱闹、关键时刻所有人都会看向你的人，天生自带“跟我上”的气场。",
+    img:IMG("noble young prince warrior in golden and blue ornate armor holding a lance and flag, heroic leadership pose on battlefield, epic fantasy splash art") },
+  darius:{ name:"德莱厄斯", title:"诺克萨斯之手", traits:["hot","ambition","honor"],
+    quote:"“力量，即真理。”",
+    desc:"你信实力不信嘴炮。就像德莱厄斯——从无名小卒一路劈成诺克萨斯之手，铁血背后是对“强者秩序”的执念。你狠得下心、扛得起事，是朋友眼里最不好惹、也最值得托付的那一个。",
+    img:IMG("massive brutal warrior with huge battle axe, heavy black and red armor, scars, intimidating warlord presence, epic fantasy splash art, dramatic lighting") },
+  vi:{ name:"蔚", title:"皮城执法官", traits:["hot","protect","rebel"],
+    quote:"“先打一拳，再问问题。”",
+    desc:"你直来直去，最烦弯弯绕。就像蔚——祖安孤儿出身，从街头一路打到皮城执法官，铁拳里裹着一颗护短的心：规矩你认，但谁敢动你的人，先问问你的拳头答不答应。",
+    img:IMG("tough young woman enforcer with pink hair and giant hextech gauntlets, confident smirk, steampunk city background, dynamic action pose, epic fantasy splash art") },
+  shen:{ name:"慎", title:"暮光之眼", traits:["calm","protect","faith"],
+    quote:"“均衡，存乎万物之间。”",
+    desc:"你安静却可靠。就像慎——同门劫叛教弑师，他依然守住均衡之道，游走于灵体与凡世之间庇护众人。你从不抢风头，却总在最需要的时刻出现；朋友把后背交给你，永远放心。",
+    img:IMG("masked ninja in dark blue armor holding twin katanas, calm spiritual aura, glowing eyes behind mask, twilight atmosphere, epic fantasy splash art") },
+  taric:{ name:"塔里克", title:"瓦洛兰之盾", traits:["gentle","protect","faith"],
+    quote:"“星光，护佑着你。”",
+    desc:"你温柔而坚定。就像塔里克——攀上巨神峰获得星灵之力，从此成为整个世界的守护者。你不爱出风头，但朋友难过时第一个想到的总是你：你的存在本身，就是一种治愈。",
+    img:IMG("handsome guardian warrior with crystal gems and starlight, white and blue robes, gentle protective aura, mountain peak background, epic fantasy splash art") },
+  zed:{ name:"劫", title:"影流之主", traits:["faith","lone","ambition"],
+    quote:"“无形之刃，最为致命。”",
+    desc:"你极度自律，追求极致。就像劫——为追求更强的力量不惜叛出均衡教派，背负弑师之名也要走自己的路。你在别人看不见的地方下狠功夫，世人只看到你出鞘那一刻的惊艳。",
+    img:IMG("shadow ninja master with dark armor and glowing red eyes, shadow clones swirling, dark temple background, menacing pose, epic fantasy splash art") },
+  kalista:{ name:"卡莉丝塔", title:"复仇之矛", traits:["devotion","honor","lone"],
+    quote:"“背叛，必须得到清算。”",
+    desc:"你重承诺、认死理。就像卡莉丝塔——生前被至亲背叛，死后化身复仇之矛，回应一切被辜负者的召唤。你对朋友极度忠诚，同样的，背叛在你这里永远没有第二次机会。",
+    img:IMG("ghostly spectral woman warrior with spears piercing her back, glowing green spirit energy, vengeful wraith, dark misty background, epic fantasy splash art") },
+  olaf:{ name:"奥拉夫", title:"狂战士", traits:["hot","free","mad"],
+    quote:"“来！给我一场荣耀的战斗！”",
+    desc:"你活得热烈而纯粹。就像奥拉夫——预言说他会安详老死，他偏不服，一生都在追逐一场轰轰烈烈的战斗。你讨厌温吞的日子，认定的目标就一往无前，“痛快”是你唯一的人生信条。",
+    img:IMG("fierce viking berserker with red beard and dual axes, roaring in battle, snowy mountain battlefield, epic fantasy splash art, dramatic lighting") },
+  sett:{ name:"瑟提", title:"腕豪", traits:["hot","devotion","free"],
+    quote:"“这场架，我打定了。”",
+    desc:"你看着不好惹，其实心软得很。就像瑟提——地下拳场的王，打着最狠的架，赚的钱全寄给妈妈。你的热血与不羁之下，藏着对家人朋友最笨拙也最滚烫的温柔。",
+    img:IMG("muscular pit fighter with beast ears and fur collar, brass knuckles, underground fighting arena, confident roguish grin, epic fantasy splash art") },
+  jinx:{ name:"金克丝", title:"暴走萝莉", traits:["mad","rebel","joy"],
+    quote:"“规则？就是用来打破的！”",
+    desc:"你的灵魂里住着一场烟火。就像金克丝——从祖安孤儿“爆爆”，到让全城头疼的爆破鬼才。你讨厌无聊、点子最多、精力爆棚，和你在一起，朋友永远不知道下一秒会发生什么——这正是他们爱你的原因。",
+    img:IMG("manic young woman with long blue braids holding a rocket launcher, chaotic grin, explosions and graffiti background, vibrant colors, epic fantasy splash art") },
+  graves:{ name:"格雷福斯", title:"法外狂徒", traits:["free","hot","devotion"],
+    quote:"“出来混，讲的是信誉。”",
+    desc:"你是江湖儿女。就像格雷福斯——被兄弟崔斯特背叛入狱，越狱后枪口对峙，最后却能一笑泯恩仇、重新并肩。你爱自由、讲义气、脾气爆，但朋友开口，你永远第一个到。",
+    img:IMG("rugged outlaw gunslinger with a huge shotgun, cigar, trench coat, wild west fantasy style, smoky bar background, epic fantasy splash art") },
+  yasuo:{ name:"亚索", title:"疾风剑豪", traits:["lone","free","calm"],
+    quote:"“死亡如风，常伴吾身。”",
+    desc:"你是孤独的行者。就像亚索——被冤弑师，流浪多年只为寻找真凶，甚至不得不面对兄长永恩的剑。你话不多，内心却有谁都动摇不了的道；经历让你沉默，但从未让你低头。",
+    img:IMG("wandering ronin swordsman with long dark hair, wind swirling around his blade, lone traveler standing on a cliff, epic fantasy splash art") },
+  riven:{ name:"锐雯", title:"放逐之刃", traits:["lone","faith","calm"],
+    quote:"“断剑重铸之日，骑士归来之时。”",
+    desc:"你安静，且有故事。就像锐雯——曾是诺克萨斯最锋利的刃，看清战争的真相后亲手断剑、自我放逐。你不解释过去，只默默把自己打磨成更好的人，等一个重新出发的时机。",
+    img:IMG("white haired woman warrior with a giant broken glowing runic blade, wanderer cloak, determined eyes, sunset battlefield, epic fantasy splash art") },
+  kayn:{ name:"凯隐", title:"影流之镰", traits:["ambition","lone","mad"],
+    quote:"“我将超越一切，包括神明。”",
+    desc:"你野心勃勃又孤傲自持。就像凯隐——体内住着暗裔拉亚斯特，日夜与黑暗拔河，却坚信赢的会是自己。你敢驾驭别人不敢碰的危险：能驯服黑暗的人，才配拥有真正的力量。",
+    img:IMG("hooded assassin holding a giant living scythe with a red demonic eye, half shadow half human, dark fantasy atmosphere, epic splash art") },
+  talon:{ name:"泰隆", title:"刀锋之影", traits:["lone","calm","devotion"],
+    quote:"“刀下生，刀下死。”",
+    desc:"你是冷静的猎手。就像泰隆——诺克萨斯底层的孤儿，凭一双快刀成为将军身边最锋利的刃。你不爱热闹、独来独往，但认定的人和事，会用自己的方式护到底。",
+    img:IMG("silent assassin with hood and triple arm blades, dark alley rooftop, cold calculating eyes, moonlight, epic fantasy splash art") },
+  lux:{ name:"拉克丝", title:"光辉女郎", traits:["joy","gentle","wit"],
+    quote:"“光明，只是开始。”",
+    desc:"你是人群里的小太阳。就像拉克丝——生在视魔法为禁忌的德玛西亚，却偷偷藏起自己的光，最终学会拥抱真正的自己。你聪明乐观，相信光明的意义不是没见过黑暗，而是选择在黑暗里依然发光。",
+    img:IMG("radiant young mage woman with blonde hair and glowing light staff, warm golden magic, hopeful smile, epic fantasy splash art, dramatic lighting") },
+  seraphine:{ name:"萨勒芬妮", title:"星籁歌姬", traits:["joy","gentle","art"],
+    quote:"“唱出你心里的歌。”",
+    desc:"你温暖又有表达欲。就像萨勒芬妮——天生能听见所有人灵魂的歌声，于是把它们唱给整个世界听。你擅长发现别人的闪光点，是聚会的气氛担当，也是朋友失落时最会安慰人的那个。",
+    img:IMG("cheerful pop star girl with pink hair, floating crystal stage, musical notes and light waves, futuristic city concert, epic fantasy splash art") },
+  mordekaiser:{ name:"莫德凯撒", title:"冥界之王", traits:["ambition","calm","faith"],
+    quote:"“所有人，都将臣服。”",
+    desc:"你天生是执棋的人。就像莫德凯撒——死了都不肯退场，在冥界建起自己的王国，两度杀回人间。你目标感极强、布局极深，认定的棋局，没人能掀你的棋盘。",
+    img:IMG("colossal undead warlord in black spiked iron armor holding a giant mace, green soul fire, dark throne of bones, epic fantasy splash art, dramatic lighting") },
+  swain:{ name:"斯维因", title:"诺克萨斯统领", traits:["wit","ambition","cunning"],
+    quote:"“帝国，高于一切。”",
+    desc:"你是深谋远虑的战略家。就像斯维因——战败断臂、跌落谷底，却与恶魔交易换来洞穿人心的眼睛，最终坐上统领之位。你看人看事总比旁人深三层，朋友遇上大事，总想先听听你的判断。",
+    img:IMG("imposing military grand general with a demonic left arm and ravens, red and black coat, strategic mastermind aura, epic fantasy splash art") },
+  karma:{ name:"卡尔玛", title:"天启者", traits:["calm","faith","gentle"],
+    quote:"“灵魂，永远不屈。”",
+    desc:"你沉静而有力量。就像卡尔玛——艾欧尼亚之魂的代代传承者，于乱世之中守住一方精神火种。你不争不抢，却自带让人信服的气场；朋友迷茫时，你的一句话往往能点醒他们。",
+    img:IMG("serene spiritual woman leader with floating green soul energy orbs, elegant white and green robes, meditative pose, epic fantasy splash art") },
+  orianna:{ name:"奥莉安娜", title:"发条魔灵", traits:["gentle","devotion","art"],
+    quote:"“我，会保护你。”",
+    desc:"你细腻而长情。就像奥莉安娜——父亲为救重病的她，用精密机械一点点替换她坏死的躯体，而她的温柔从未被齿轮磨掉。你不擅长激烈的表达，但对重要的人，会默默地好一辈子。",
+    img:IMG("elegant clockwork ballerina girl made of brass and porcelain, floating brass ball companion, delicate gears, soft golden light, epic fantasy splash art") },
+  leblanc:{ name:"乐芙兰", title:"诡术妖姬", traits:["cunning","wit","ambition"],
+    quote:"“你看到的，是我想让你看到的。”",
+    desc:"你深不可测。就像乐芙兰——黑色玫瑰的首脑，千年间换了无数张面孔，把整个诺克萨斯玩弄于股掌。你永远留有后手；别人以为看懂了的你，不过是万千镜像中的一面。",
+    img:IMG("mysterious sorceress in purple and gold, mirror clone illusions, elegant sinister smile, dark rose petals floating, epic fantasy splash art") },
+  cassiopeia:{ name:"卡西奥佩娅", title:"魔蛇之拥", traits:["cunning","seek","ambition"],
+    quote:"“美，即是武器。”",
+    desc:"你敏锐，且懂得藏锋。就像卡西奥佩娅——诺克萨斯贵族之女，遭诅咒化为蛇身，却把诅咒活成了武器。你洞察人心、进退有度，从不打无准备之仗，是朋友圈里当之无愧的“军师”。",
+    img:IMG("beautiful serpent woman with snake lower body and snakes for hair, emerald scales, seductive dangerous gaze, ancient tomb background, epic fantasy splash art") },
+  ezreal:{ name:"伊泽瑞尔", title:"探险家", traits:["seek","joy","free"],
+    quote:"“是时候表演真正的技术了！”",
+    desc:"你是自信的天才冒险家。就像伊泽瑞尔——为寻找失踪的父母跑遍符文之地的古墓，顺手还拯救了几次世界。你好奇心爆棚、嘴上从不认输，困难对你不是阻碍，而是探险的邀请函。",
+    img:IMG("young blonde adventurer with magical gauntlet and explorer outfit, confident grin, ancient ruins background, arcane energy, epic fantasy splash art") },
+  taliyah:{ name:"塔莉垭", title:"岩雀", traits:["gentle","free","devotion"],
+    quote:"“岩石，会记住回家的路。”",
+    desc:"你热情，又有方向感。就像塔莉垭——为掌控体内织岩之力远走求学，学成后毅然返乡守护族人。你爱自由、爱探索，但无论走多远，心里永远装着出发的地方和那群人。",
+    img:IMG("young desert nomad girl weaving floating rocks with earth magic, warm smile, canyon sunset, flowing scarf, epic fantasy splash art") },
+  samira:{ name:"莎弥拉", title:"沙漠玫瑰", traits:["mad","free","hot"],
+    quote:"“刺激，是活着的证明。”",
+    desc:"你是天生的玩家。就像莎弥拉——从枪林弹雨里杀出血路的佣兵，平淡是她唯一害怕的东西。你胆子大、反应快、魅力值拉满，越是别人说“不可能”的局，你越要笑着闯一闯。",
+    img:IMG("daring female mercenary gunslinger with an eyepatch, dual pistols and a blade, stylish red outfit, action pose in desert bazaar, epic fantasy splash art") },
+  akali:{ name:"阿卡丽", title:"离群之刺", traits:["rebel","free","wit"],
+    quote:"“我命由我，不由天。”",
+    desc:"你桀骜又灵动。就像阿卡丽——出身均衡教派，却偏要离开师门单干，把古老的暗影之道玩出了自己的风格。你讨厌被定义，而你的每一次“叛逆”，最后都被证明是对的。",
+    img:IMG("agile female ninja with mask and kama blades, street graffiti style, neon green energy, dynamic crouching pose, epic fantasy splash art") },
+  yi:{ name:"易", title:"无极剑圣", traits:["faith","calm","lone"],
+    quote:"“保持内心平静，剑自然会快。”",
+    desc:"你追求内心的境界。就像易大师——无极村被炼金烈焰吞噬，他背负最后的传承隐世修行。外界的喧嚣动摇不了你：你知道真正的强大是心无波澜，最快的剑，出鞘时往往最安静。",
+    img:IMG("blindfolded master swordsman meditating with a glowing sword, bamboo forest, peaceful zen aura, epic fantasy splash art, dramatic lighting") },
+  ahri:{ name:"阿狸", title:"九尾妖狐", traits:["gentle","seek","devotion"],
+    quote:"“你的心，在说什么呢？”",
+    desc:"你灵动而深情。就像阿狸——天生能摄人心魄，却选择收敛力量，努力学着做一个真正的“人”。你对世界永远好奇，对感情永远认真，是温柔与神秘感的奇妙混合体。",
+    img:IMG("beautiful fox spirit woman with nine white tails and fox ears, glowing soul orb, mystical forest, elegant flowing dress, epic fantasy splash art") },
+  jhin:{ name:"烬", title:"戏命师", traits:["art","mad","calm"],
+    quote:"“艺术，应当震慑人心。”",
+    desc:"你是优雅的完美主义者。就像烬——把整个符文之地当作舞台，把每一次出手都做成作品。你对“美”的追求近乎偏执，宁缺毋滥；要么不做，要做，就惊艳全场。",
+    img:IMG("elegant masked performer assassin with ornate gun and white mask, theatrical stage with rose petals, dark artistic atmosphere, epic fantasy splash art") },
+  thresh:{ name:"锤石", title:"魂锁典狱长", traits:["cunning","calm","mad"],
+    quote:"“啊，多么美妙的灵魂。”",
+    desc:"你深沉而通透。就像锤石——暗影岛的典狱长，收藏灵魂，更洞悉灵魂。你看人极准、心思缜密，表面不动声色，实则一切都在你的灯笼之中（哦不，掌控之中）。",
+    img:IMG("ghastly spectral warden with chains hooks and a glowing green soul lantern, skeletal face, dark mist, epic fantasy splash art, dramatic lighting") },
+  ekko:{ name:"艾克", title:"时间刺客", traits:["wit","devotion","rebel"],
+    quote:"“时间不在于你拥有多少，而在于你怎样使用。”",
+    desc:"你是念旧的聪明人。就像艾克——祖安的天才少年，手握回溯时间的 Z 型驱动，却一次次用它回到过去救朋友。你脑子快、重情义，朋友有难，你永远是那个想办法“再来一次”的人。",
+    img:IMG("cool young street inventor with white dreadlocks and glowing time device, neon underground city, dynamic pose, epic fantasy splash art") },
+  caitlyn:{ name:"凯特琳", title:"皮城女警", traits:["wit","protect","honor"],
+    quote:"“我，从不失手。”",
+    desc:"你是严谨的秩序守护者。就像凯特琳——出身皮城名门，却偏要靠自己的枪法成为最顶尖的警长。你观察力敏锐、做事有板有眼，朋友们都知道：交给你的事，稳。",
+    img:IMG("elegant female sheriff sniper with long rifle and top hat, steampunk city, sharpshooter pose, epic fantasy splash art") },
+  sylas:{ name:"塞拉斯", title:"解脱者", traits:["rebel","free","ambition"],
+    quote:"“他们口中的枷锁，是我的武器。”",
+    desc:"你是天生的反抗者。就像塞拉斯——因身怀魔法被囚禁十五年，出狱后点燃了整个德玛西亚的旧秩序。你最见不得“理所当然”的压迫：规则若不公平，你就做那个改写规则的人。",
+    img:IMG("muscular prisoner mage with broken chains glowing with stolen magic, defiant revolutionary pose, epic fantasy splash art, dramatic lighting") },
+  viego:{ name:"佛耶戈", title:"破败之王", traits:["devotion","mad","lone"],
+    quote:"“伊苏尔德，我必与你重逢。”",
+    desc:"你是极致的深情种。就像佛耶戈——痛失挚爱后，不惜诅咒整个世界也要把她找回来。你认定的人和事，会执着到近乎偏执；你的温柔只给一个人，但给出去，就是全部。",
+    img:IMG("pale ruined king with glowing green corrupted greatsword and crown, ghostly armor, tragic obsessive aura, dark mist, epic fantasy splash art") },
+  vex:{ name:"薇古丝", title:"愁云使者", traits:["gloom","lone","calm"],
+    quote:"“随便吧，都行。”",
+    desc:"你是看透一切的丧萌哲学家。就像薇古丝——约德尔人里唯一的“阴天”，对全世界的热情过敏。你懒得合群、懒得解释，但你清醒地知道：热闹是他们的，你自有你的小宇宙。",
+    img:IMG("gloomy small yordle girl with living shadow companion, oversized hoodie, unimpressed expression, moody fog, dark cute style, epic fantasy splash art") },
+  braum:{ name:"布隆", title:"弗雷尔卓德之心", traits:["gentle","joy","protect"],
+    quote:"“站在布隆后面！”",
+    desc:"你是行走的小火炉。就像布隆——弗雷尔卓德最受爱戴的传奇，用一面门板巨盾护住所有弱者。你块头未必大，心一定最暖；有你在的地方，就没有冷场，也没有人被落下。",
+    img:IMG("giant warm-hearted man with huge mustache carrying a massive door shield, snowy tavern, friendly smile, epic fantasy splash art") },
+  twistedfate:{ name:"崔斯特", title:"卡牌大师", traits:["cunning","free","joy"],
+    quote:"“命运，由我来洗牌。”",
+    desc:"你是潇洒的老千。就像崔斯特——牌桌上长大的浪子，赌术和骗术点满，却能为兄弟格雷福斯两肋插刀。你看着玩世不恭，其实心里门儿清：牌品如人品，你从不坑自己人。",
+    img:IMG("suave gambler with magical glowing cards and wide-brimmed hat, sly grin, riverboat casino, epic fantasy splash art") },
+  gwen:{ name:"格温", title:"灵罗娃娃", traits:["gentle","art","devotion"],
+    quote:"“剪开，命运的丝线。”",
+    desc:"你是温柔的造物。就像格温——由裁缝最得意的作品化成的人偶，带着主人的爱学会了生活。你细腻、念旧、对美有天生的感知，一针一线地，把自己的小日子缝成了诗。",
+    img:IMG("living doll girl with giant magical scissors, lolita dress, stitched details, gentle smile, soft golden light, epic fantasy splash art") },
+  zoe:{ name:"佐伊", title:"暮光星灵", traits:["joy","mad","free"],
+    quote:"“来玩嘛！”",
+    desc:"你是宇宙级的古灵精怪。就像佐伊——活了上千岁却永远像个孩子的暮光星灵，把星辰当弹珠玩。你脑回路清奇、点子天马行空，朋友永远猜不到你下一句会说什么——包括你自己。",
+    img:IMG("mischievous cosmic girl with galaxy hair and portal magic, playful trickster, stars and sparkles, epic fantasy splash art") },
+  yone:{ name:"永恩", title:"封魔剑魂", traits:["honor","calm","devotion"],
+    quote:"“花开花谢，果实满枝。”",
+    desc:"你是可靠的兄长型人格。就像永恩——生前是亚索最稳重的兄长，死后斩魔归来，依然把责任扛在肩上。你自律、克制、认理不认亲，是朋友里最“大人”的那个存在。",
+    img:IMG("masked swordsman spirit with twin blades, red demon mask, flower petals, calm disciplined stance, epic fantasy splash art") },
+  leesin:{ name:"李青", title:"盲僧", traits:["faith","calm","hot"],
+    quote:"“我用双手，成就我的梦想。”",
+    desc:"你是清醒的修行者。就像李青——为赎当年失控之罪，蒙眼苦行多年。你对自己够狠、目标感极强；别人看到的是你的自律，只有你知道，那是在和内心的野兽过招。",
+    img:IMG("blind monk martial artist with glowing fists, temple training grounds, disciplined meditation pose, epic fantasy splash art") },
+  ryze:{ name:"瑞兹", title:"符文法师", traits:["faith","seek","lone"],
+    quote:"“世界符文的重量，你想象不到。”",
+    desc:"你是孤独的守夜人。就像瑞兹——目睹过符文战争的毁灭，从此一生流浪，只为把世界符文藏到无人能及之处。你想得比谁都远，扛得比谁都多，却很少说出口。",
+    img:IMG("bald wandering archmage with glowing blue rune tattoos and a huge scroll, desert ruins, burdened protector, epic fantasy splash art") },
+};
+
+let cur = 0;
+const tScores = {};
+Object.keys(TRAITS).forEach(t=>tScores[t]=0);
+
+function $(id){ return document.getElementById(id); }
+
+function startQuiz(){
+  $("screen-start").hidden = true;
+  $("screen-quiz").hidden = false;
+  renderQ();
+}
+
+function renderQ(){
+  const q = QUESTIONS[cur];
+  $("q-count").textContent = `第 ${cur+1} / ${QUESTIONS.length} 题`;
+  const pct = Math.round(cur / QUESTIONS.length * 100);
+  $("q-pct").textContent = pct + "%";
+  $("pbar").style.width = pct + "%";
+  $("q-num").textContent = `QUESTION ${cur+1}`;
+  $("q-text").textContent = q.text;
+  const box = $("q-opts");
+  box.innerHTML = "";
+  const tags = ["A","B","C","D"];
+  q.opts.forEach((o,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.innerHTML = `<span class="tag">${tags[i]}</span>${o[0]}`;
+    btn.onclick = ()=>pick(btn, o[1], o[2]);
+    box.appendChild(btn);
+  });
+  const qb = $("q-box");
+  qb.classList.remove("fade"); void qb.offsetWidth; qb.classList.add("fade");
+}
+
+function pick(btn, main, sub){
+  document.querySelectorAll(".opt").forEach(b=>b.style.pointerEvents="none");
+  btn.classList.add("picked");
+  tScores[main] += 2;
+  tScores[sub] += 1;
+  setTimeout(()=>{
+    cur++;
+    if(cur < QUESTIONS.length){ renderQ(); }
+    else{ finish(); }
+  }, 260);
+}
+
+let resultCache = null;
+
+function finish(){
+  $("pbar").style.width = "100%";
+  $("q-pct").textContent = "100%";
+  let bestKey = null, bestScore = -1;
+  for(const key in HEROES){
+    const s = HEROES[key].traits.reduce((sum,t)=>sum + tScores[t], 0);
+    if(s > bestScore){ bestScore = s; bestKey = key; }
+  }
+  resultCache = bestKey;
+  setTimeout(()=>{
+    location.hash = "r=" + bestKey;
+    renderResult(bestKey, true);
+  }, 350);
+}
+
+function topTraits(n){
+  return Object.keys(tScores)
+    .sort((a,b)=>tScores[b]-tScores[a])
+    .slice(0,n);
+}
+
+function renderResult(heroKey, isOwn){
+  const hero = HEROES[heroKey];
+  $("screen-start").hidden = true;
+  $("screen-quiz").hidden = true;
+  $("screen-result").hidden = false;
+  $("screen-result").classList.add("fade");
+  $("result-head").textContent = isOwn ? "— 测 试 结 果 —" : "— TA 的 英 雄 人 格 —";
+  $("btn-own").hidden = !isOwn;
+  $("btn-shared").hidden = isOwn;
+
+  const img = $("hero-img");
+  const box = $("hero-img-box");
+  const loading = $("img-loading");
+  const fallback = $("img-fallback");
+  box.style.display = "flex";
+  fallback.style.display = "none";
+  loading.style.display = "block";
+  img.style.display = "";
+  $("fallback-ch").textContent = hero.name;
+  $("fallback-en").textContent = hero.title;
+  img.className = "";
+  let retried = false, settled = false;
+  const timer = setTimeout(()=>{ if(!settled) showFallback(); }, 12000);
+  function showFallback(){
+    settled = true;
+    clearTimeout(timer);
+    loading.style.display = "none";
+    img.style.display = "none";
+    fallback.style.display = "flex";
+  }
+  img.onload = ()=>{
+    settled = true;
+    clearTimeout(timer);
+    loading.style.display = "none";
+    img.classList.add("loaded");
+  };
+  img.onerror = ()=>{
+    if(!retried){
+      retried = true;
+      img.src = hero.img + "&t=" + Date.now();
+    }else{
+      showFallback();
+    }
+  };
+  img.src = hero.img;
+
+  $("hero-name").textContent = hero.name;
+  $("hero-title").textContent = hero.title;
+  $("hero-quote").textContent = hero.quote;
+  $("hero-desc").textContent = hero.desc;
+
+  const badges = $("trait-badges");
+  badges.innerHTML = "";
+  hero.traits.forEach(t=>{
+    const b = document.createElement("span");
+    b.className = "trait-badge";
+    b.textContent = TRAITS[t];
+    badges.appendChild(b);
+  });
+
+  if(isOwn){
+    $("top-traits-wrap").style.display = "block";
+    renderTopTraits();
+  }else{
+    $("top-traits-wrap").style.display = "none";
+  }
+  window.scrollTo(0,0);
+}
+
+function renderTopTraits(){
+  const top = topTraits(3);
+  const max = tScores[top[0]] || 1;
+  const box = $("top-traits");
+  box.innerHTML = "";
+  top.forEach(t=>{
+    const row = document.createElement("div");
+    row.className = "trait-row";
+    row.innerHTML = `
+      <div class="trait-labels"><span>${TRAITS[t]}</span><span>${tScores[t]} 分</span></div>
+      <div class="trait-track"><div class="trait-fill" style="width:0"></div></div>`;
+    box.appendChild(row);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      row.querySelector(".trait-fill").style.width = Math.round(tScores[t]/max*100) + "%";
+    }));
+  });
+}
+
+function restart(){
+  location.hash = "";
+  location.reload();
+}
+
+function copyShare(){
+  if(!resultCache) return;
+  const hero = HEROES[resultCache];
+  const kw = hero.traits.map(t=>TRAITS[t]).join(" · ");
+  const text = `我在「你是哪位LOL英雄」测出了【${hero.name} · ${hero.title}】！性格关键词：${kw}。${hero.quote}\n你又是哪位英雄？快来测 → ${location.href}`;
+  const done = ()=>toast("分享文案已复制，去粘贴给好友吧！");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  }else{
+    fallbackCopy(text, done);
+  }
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); }
+  catch(e){ toast("复制失败，请手动复制网址"); }
+  document.body.removeChild(ta);
+}
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  const m = location.hash.match(/#r=([a-z]+)/);
+  if(m && HEROES[m[1]]){
+    renderResult(m[1], false);
+  }
+});
+</script>
+</body>
+</html>
